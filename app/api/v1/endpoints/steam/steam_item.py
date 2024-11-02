@@ -13,6 +13,7 @@ router = APIRouter()
 @router.get("/price")
 async def price_endpoint(game: str, item: str):
     data = await price(game, item)
+
     if not data.get("success"):
         raise HTTPException(status_code=404, detail="Item price not found")
     return data

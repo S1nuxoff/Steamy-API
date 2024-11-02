@@ -22,9 +22,8 @@ async def price(game: str, item: str):
     }
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params) as response:
-            response.raise_for_status()
-            data = await response.json()
-            if data.get("success"):
+            if response.status == 200:
+                data = await response.json()
                 lowest_price_str = data.get("lowest_price")
                 median_price_str = data.get("median_price")
                 volume = data.get("volume")
@@ -37,4 +36,4 @@ async def price(game: str, item: str):
                 }
                 return {"success": True, "data": data}
             else:
-                return {"success": False}
+                return {"success": False, "error": f"Server returned status code {response.status}"}

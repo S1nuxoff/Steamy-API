@@ -12,7 +12,4 @@ class User(Base):
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True, nullable=False)
     steam_id: Mapped[Optional[int]] = mapped_column(Integer, unique=True, nullable=True)
     premium: Mapped[bool] = mapped_column(Boolean, default=False)
-    language: Mapped[str] = mapped_column(String, nullable=False)
-    currency: Mapped[str] = mapped_column(String, nullable=False)
-    game: Mapped[str] = mapped_column(String, nullable=False)
     favourites = relationship("Favourite", back_populates="user", cascade="all, delete-orphan")

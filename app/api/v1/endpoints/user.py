@@ -25,7 +25,6 @@ async def get_user_endpoint(tg_id: int, current_user: User = Depends(deps.get_cu
         raise UserNotFoundException()
     return user
 
-
 @router.get("/favorites", summary="Update user")
 async def get_user_favorite_endpoint(
         tg_id: int,
@@ -37,7 +36,6 @@ async def get_user_favorite_endpoint(
         raise UserNotFoundException()
     favorites = await get_favorites(user, game)
     return favorites
-
 
 # GET--------------------------------------------------------------------------------------------------------------------
 
