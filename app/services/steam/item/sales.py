@@ -6,15 +6,16 @@ import urllib.parse
 from typing import Dict, List, Tuple, Any
 from datetime import datetime, timedelta
 
+from app.services.steam.item.price import price
 from app.utils.reference_data_loader import load_reference_data
-from app.exceptions.custom_exceptions import GameNotFoundException
+from app.exceptions.custom_exceptions import GameNotFoundException, CurrencyNotFoundException
 from app.core.config import settings
-
+from app.services.currency.get_currency_ratio import get_currency_ratio
 
 reference_data = load_reference_data()
 
-
 regex = re.compile(r"Market_LoadOrderSpread\( (\d+) \)")
+
 
 def extract_sales_history(html_data):
     pattern = r"var line1\s*=\s*(\[.*?\]);"
@@ -53,6 +54,7 @@ def extract_sales_history(html_data):
             continue
 
     return dates, prices, sales
+
 
 def filter_sales_history(dates: List[datetime], prices: List[float], period: str) -> Tuple[
     List[datetime], List[float], str]:
@@ -107,30 +109,52 @@ def extract_and_filter_sales_history(html_data: str, period: str) -> Dict[str, A
         }
     }
 
+
 def count_sales_within_tolerance(price: float, tolerance: float, prices: List[float]) -> int:
     return sum(1 for p in prices if price - tolerance <= p <= price + tolerance)
 
-def compute_statistics(filtered_prices: List[float], filtered_sales: List[int], tolerance: float = 0.02) -> Tuple[
-    float, int, float, int, float, int, float]:
-    if not filtered_prices:
-        return 0.00, 0, 0.00, 0, 0.00, 0, 0.00
-    avg_price = round(sum(filtered_prices) / len(filtered_prices), 2)
-    avg_volume = count_sales_within_tolerance(avg_price, tolerance, filtered_prices)
-    max_price = round(max(filtered_prices), 2)
-    max_volume = count_sales_within_tolerance(max_price, tolerance, filtered_prices)
-    min_price = round(min(filtered_prices), 2)
-    min_volume = count_sales_within_tolerance(min_price, tolerance, filtered_prices)
-    volume = round(sum(filtered_sales), 2)
 
-    return avg_price, avg_volume, max_price, max_volume, min_price, min_volume, volume
+def compute_statistics(
+        filtered_prices: List[float],
+        filtered_sales: List[int],
+        ratio: float,
+        tolerance: float = 0.02
+) -> Tuple[float, int, float, int, float, int, int, List[float]]:
+    # Проверяем, что списки не пустые
+    if not filtered_prices or not filtered_sales:
+        raise ValueError("Lists filtered_prices and filtered_sales must not be empty.")
+
+    prices = []
+    for price in filtered_prices:
+        prices.append(round(price * ratio, 2))  # Умножаем на ratio и округляем
+
+    avg_price = round(sum(prices) / len(prices), 2)
+    avg_volume = count_sales_within_tolerance(avg_price, tolerance, prices)
+
+    max_price = max(prices)
+    max_volume = count_sales_within_tolerance(max_price, tolerance, prices)
+
+    min_price = min(prices)
+    min_volume = count_sales_within_tolerance(min_price, tolerance, prices)
+
+    volume = sum(filtered_sales)  # Убираем округление, так как volume — целое число
+
+    return avg_price, avg_volume, max_price, max_volume, min_price, min_volume, volume, prices
 
 
-async def sales(game: str, market_hash_name: str, period: str, timeout=10) -> Dict[str, Any]:
+async def sales(game: str, item: str, period: str, currency: str, timeout=10) -> Dict[str, Any]:
     game_data = reference_data["games"].get(game)
     if not game_data:
         raise GameNotFoundException()
+
+    currency_data = reference_data["currencies"].get(currency)
+    if not currency_data:
+        raise CurrencyNotFoundException()
+
+    ratio = await get_currency_ratio(currency)
+
     steam_id = game_data.get("steam_id")
-    encoded_name = urllib.parse.quote(market_hash_name)
+    encoded_name = urllib.parse.quote(item)
     url = f"{settings.STEAM_MARKET_LISTINGS_URL}{steam_id}/{encoded_name}"
 
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
@@ -147,12 +171,11 @@ async def sales(game: str, market_hash_name: str, period: str, timeout=10) -> Di
     filtered_dates = sales.get('filtered_dates')
     filtered_prices = sales.get('filtered_prices')
     filtered_sales = sales.get('filtered_sales')
-    avg, avg_volume, max_price, max_volume, min_price, min_volume, volume = compute_statistics(filtered_prices,
-                                                                                               filtered_sales)
+    avg, avg_volume, max_price, max_volume, min_price, min_volume, volume , prices = compute_statistics(filtered_prices,
+                                                                                               filtered_sales, ratio)
     data = {
-        "success": True,
         "data": {
-            "market_hash_name": market_hash_name,
+            "item": item,
             "market_page": url,
             "filter_period": filter_period,
             "sales": {
@@ -164,7 +187,7 @@ async def sales(game: str, market_hash_name: str, period: str, timeout=10) -> Di
                 "avg_volume": avg_volume,
                 "volume": volume,
                 "dates": filtered_dates,
-                "prices": filtered_prices,
+                "prices": prices,
             }
 
         }

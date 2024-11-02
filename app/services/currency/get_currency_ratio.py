@@ -1,13 +1,11 @@
-from typing import Optional
-
 from sqlalchemy.future import select
-
-from app.schemas.currency import Currency
+from typing import Optional
+from app.models.currency import Currency
 from app.db.session import async_session
 
-async def get_currency_ratio(tg_id: int) -> Optional[User]:
+async def get_currency_ratio(name: str) -> Optional[float]:
     async with async_session() as session:
-        result = await session.execute(
-            select(User).where(User.tg_id == tg_id)
-        )
-        return result.scalar_one_or_none()
+        stmt = select(Currency.ratio).where(Currency.name == name)  # Выбираем только столбец ratio
+        result = await session.execute(stmt)
+        ratio = result.scalar_one_or_none()
+        return ratio

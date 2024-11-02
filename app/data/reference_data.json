@@ -3,18 +3,16 @@
     "USD": { "name": "United States Dollar" },
     "RUB": { "name": "Russian Ruble" },
     "PLN": { "name": "Polish Zloty" },
-    "UAH": { "name": "Ukrainian Hryvnia" }
+    "UAH": { "name": "Ukrainian Hryvnia" },
+    "EUR": { "name": "Euro" }
   },
   "languages": {
     "uk": { "name": "Українська", "currency": "UAH" },
     "pl": { "name": "Polski", "currency": "PLN" },
     "en": { "name": "English", "currency": "USD" },
-    "ru": { "name": "Русский", "currency": "RUB" },
-    "tt": { "name": "Татар", "currency": "RUB" }
+    "ru": { "name": "Русский", "currency": "RUB" }
   },
   "games": {
-    "tf2": { "steam_id": 440, "dmarket_id": "tf2", "title": "Team Fortress 2" },
-    "rust": { "steam_id": 252490, "dmarket_id": "rust", "title": "Rust" },
     "cs2": { "steam_id": 730, "dmarket_id": "a8db", "title": "Counter-Strike 2" },
     "dota2": { "steam_id": 570, "dmarket_id": "9a92", "title": "Dota 2" }
   }
