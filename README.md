@@ -66,9 +66,6 @@ FastAPI automatically generates interactive documentation for your API, accessib
 - **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-![Swagger UI](https://fastapi.tiangolo.com/img/index/index-01-swagger-docs.png)  
-_Example Swagger UI Interface_
-
 ## Authentication
 
 The API uses API keys to authenticate requests. You must include your API key in the `X-API-KEY` header of each request.
