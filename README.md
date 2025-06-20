@@ -465,6 +465,3 @@ This project is licensed under the [MIT License](LICENSE).
 
 If you have any questions or suggestions, feel free to contact us at [v.schip4@gmail.com](mailto:v.schip4@gmail.com).
 
----
-
-_This README was automatically generated based on the provided OpenAPI specification._
